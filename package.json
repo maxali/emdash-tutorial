@@ -1,0 +1,19 @@
+{
+  "name": "emdash-tutorial",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An editorial developer guide to the emdash CMS — deployed on Cloudflare Workers with static assets.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build-index": "node scripts/build-search-index.mjs",
+    "stamp": "node scripts/stamp-assets.mjs",
+    "build": "npm run build-index && npm run stamp",
+    "predeploy": "npm run build",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev --remote",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

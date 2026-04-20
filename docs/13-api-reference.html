@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API reference · emdash tutorial</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2><a href="index.html">emdash tutorial</a></h2>
+    <p class="tagline">Cloudflare · Astro · TypeScript</p>
+    <nav>
+      <ol>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="01-what-is-emdash.html">What is emdash?</a></li>
+        <li><a href="02-how-emdash-works.html">How emdash works</a></li>
+        <li><a href="03-cloudflare-primer.html">Cloudflare primer</a></li>
+        <li><a href="04-astro-primer.html">Astro primer</a></li>
+        <li><a href="05-getting-started.html">Getting started</a></li>
+        <li><a href="06-template-tour.html">Template tour</a></li>
+        <li><a href="07-content-modeling.html">Content modeling</a></li>
+        <li><a href="08-adding-pages.html">Adding pages</a></li>
+        <li><a href="09-customizing-templates.html">Customizing templates</a></li>
+        <li><a href="10-building-content-type.html">Building for a new content type</a></li>
+        <li><a href="11-deploying.html">Deploying to Cloudflare</a></li>
+        <li><a href="12-plugins.html">Plugins</a></li>
+        <li><a href="13-api-reference.html" class="active">API reference</a></li>
+        <li><a href="14-troubleshooting.html">Troubleshooting</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <main class="content">
+    <article>
+      <div class="eyebrow">Chapter 13 · Reference</div>
+      <h1>API reference</h1>
+      <p class="lede">Every public function you can import from <code>emdash</code>, its sibling sub-paths, and <code>@emdash-cms/cloudflare</code>. Use this as a lookup when the tutorials don't cover what you need.</p>
+
+      <div class="note">
+        <strong>Where do I import from?</strong> The root <code>"emdash"</code> package re-exports every query helper: content, taxonomy, settings, SEO, bylines, menus, search, slug utils, i18n. The sub-paths (<code>emdash/runtime</code>, <code>emdash/astro</code>, <code>emdash/ui</code>, <code>emdash/page</code>, <code>emdash/client</code>, <code>emdash/middleware</code>) are for specific contexts &mdash; see the entry-point map below.
+      </div>
+
+      <h2>Entry-point map</h2>
+      <table>
+        <thead><tr><th>Import path</th><th>When to use</th></tr></thead>
+        <tbody>
+          <tr><td><code>emdash</code></td><td>All page-level queries: content, taxonomy, settings, SEO, menus, search</td></tr>
+          <tr><td><code>emdash/runtime</code></td><td>The loader and DB handle &mdash; use <em>only</em> in <code>live.config.ts</code> or custom server routes</td></tr>
+          <tr><td><code>emdash/astro</code></td><td>The Astro integration default export + storage factories (<code>local</code>, <code>s3</code>)</td></tr>
+          <tr><td><code>emdash/ui</code></td><td>Astro UI components: <code>&lt;Image /&gt;</code>, <code>&lt;PortableText /&gt;</code>, <code>&lt;Comments /&gt;</code>, <code>&lt;WidgetArea /&gt;</code>, etc.</td></tr>
+          <tr><td><code>emdash/page</code></td><td>Page metadata, JSON-LD helpers, plugin <code>&lt;head&gt;</code> hooks</td></tr>
+          <tr><td><code>emdash/client</code></td><td>Typed browser-side REST client (<code>EmDashClient</code>)</td></tr>
+          <tr><td><code>emdash/middleware</code></td><td>Request-pipeline helpers for custom routes</td></tr>
+          <tr><td><code>@emdash-cms/cloudflare</code></td><td>Cloudflare adapters: D1, R2, Access, Images, Stream, Cache, sandbox</td></tr>
+          <tr><td><code>@emdash-cms/auth</code></td><td>Auth core + passkey / GitHub / Google providers</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Content queries</h2>
+      <p>All imported from <code>"emdash"</code>.</p>
+
+      <h3><code>getEmDashCollection(type, filter?)</code></h3>
+      <p>Fetches all entries of a collection type with optional filter, sort, and pagination. Auto-hydrates bylines and taxonomy terms; caches per (type, filter) within a request.</p>
+<pre><code>import { getEmDashCollection } from 'emdash';
+
+const { entries, error, cacheHint, nextCursor } =
+  await getEmDashCollection('posts', {
+    status: 'published',
+    orderBy: { publishedAt: 'desc' },
+    limit: 10,
+  });</code></pre>
+      <p><strong>Signature:</strong> <code>&lt;T, D&gt;(type: T, filter?: CollectionFilter) =&gt; Promise&lt;CollectionResult&lt;D&gt;&gt;</code></p>
+      <p><strong>CollectionFilter:</strong> <code>{ status?, limit?, cursor?, where?, orderBy?, locale? }</code></p>
+      <p><strong>CollectionResult:</strong> <code>{ entries, error, cacheHint, nextCursor }</code></p>
+
+      <h3><code>getEmDashEntry(type, id, options?)</code></h3>
+      <p>Fetches a single entry by ID or slug. Detects preview mode automatically; serves draft revisions when a valid preview token is present. Follows the locale fallback chain when i18n is on.</p>
+<pre><code>import { getEmDashEntry } from 'emdash';
+
+const { entry, error, isPreview } = await getEmDashEntry('posts', slug);</code></pre>
+      <p><strong>Signature:</strong> <code>(type, id, options?: { locale?: string }) =&gt; Promise&lt;EntryResult&gt;</code></p>
+      <p><strong>EntryResult:</strong> <code>{ entry, error, isPreview, fallbackLocale, cacheHint }</code></p>
+
+      <h3><code>getTranslations(type, id)</code></h3>
+      <p>Returns every locale variant sharing the same translation group as the given entry. Use to build a language switcher.</p>
+
+      <h3><code>resolveEmDashPath(path)</code></h3>
+      <p>Matches a URL path against all registered collection URL patterns and returns the matching entry with extracted params.</p>
+
+      <h3><code>getEditMeta(value)</code></h3>
+      <p>Extracts visual-editing annotation metadata (collection, id, field) from an entry value &mdash; for integrating with visual editors.</p>
+
+      <h2>Taxonomy / terms</h2>
+      <p>All imported from <code>"emdash"</code>.</p>
+
+      <h3><code>getTaxonomyTerms(taxonomyName)</code></h3>
+      <p>All terms for a taxonomy, hierarchical tree or flat list depending on its config.</p>
+
+      <h3><code>getTerm(taxonomyName, slug)</code></h3>
+      <p>One term with its entry count and child terms.</p>
+
+      <h3><code>getEntryTerms(collection, entryId, taxonomyName?)</code></h3>
+      <p>Terms assigned to a single entry. Pass <code>taxonomyName</code> to restrict to one taxonomy.</p>
+<pre><code>import { getEntryTerms } from 'emdash';
+
+const tags = await getEntryTerms('posts', post.id, 'tags');</code></pre>
+
+      <h3><code>getTermsForEntries(collection, entryIds, taxonomyName)</code></h3>
+      <p>Batch variant &mdash; eliminates N+1 queries on list pages. Returns a <code>Map&lt;entryId, TaxonomyTerm[]&gt;</code>.</p>
+
+      <h3><code>getAllTermsForEntries(collection, entryIds)</code></h3>
+      <p>All taxonomies at once. Returns <code>Map&lt;entryId, Record&lt;taxonomyName, TaxonomyTerm[]&gt;&gt;</code>.</p>
+
+      <h3><code>getTaxonomyDefs()</code> / <code>getTaxonomyDef(name)</code></h3>
+      <p>Registered taxonomy definitions (name, label, hierarchical flag, etc.).</p>
+
+      <h2>Site settings</h2>
+      <p>All imported from <code>"emdash"</code>.</p>
+
+      <h3><code>getSiteSettings()</code></h3>
+      <p>All configured site settings, with media references resolved to full URLs. Includes site title, description, logo, favicon, and any plugin-registered keys.</p>
+<pre><code>import { getSiteSettings } from 'emdash';
+
+const settings = await getSiteSettings();
+// settings.title, settings.description, settings.logo, …</code></pre>
+
+      <h3><code>getSiteSetting(key)</code></h3>
+      <p>One setting value, with request-scoped caching.</p>
+
+      <h3><code>getPluginSettings(pluginId)</code></h3>
+      <p>All persisted settings for a registered plugin.</p>
+
+      <h3><code>getPluginSetting(pluginId, key)</code></h3>
+      <p>One plugin-specific setting value.</p>
+
+      <h2>SEO</h2>
+      <p>From <code>"emdash"</code>.</p>
+
+      <h3><code>getSeoMeta(content, options?)</code></h3>
+      <p>Resolves a complete SEO metadata object for a content entry. Falls back gracefully: explicit SEO fields → content title/excerpt → site defaults. Builds absolute canonical and OG image URLs.</p>
+<pre><code>import { getSeoMeta } from 'emdash';
+
+const seo = getSeoMeta(entry, {
+  siteTitle: 'My Blog',
+  siteUrl: 'https://example.com',
+  path: Astro.url.pathname,
+});
+// seo.title, seo.canonical, seo.ogImage, seo.robots …</code></pre>
+
+      <h3><code>getContentSeo(content)</code></h3>
+      <p>Raw SEO fields from the entry without the template-fallback processing.</p>
+
+      <h2>Bylines / authors</h2>
+      <p>From <code>"emdash"</code>.</p>
+      <ul>
+        <li><code>getByline(id)</code> &mdash; one byline profile.</li>
+        <li><code>getBylineBySlug(slug)</code> &mdash; by slug.</li>
+        <li><code>getEntryBylines(collection, entryId)</code> &mdash; credits for one entry (falls back to user-linked bylines).</li>
+        <li><code>getBylinesForEntries(collection, entryIds)</code> &mdash; batch variant for list pages.</li>
+      </ul>
+
+      <h2>Navigation menus</h2>
+      <ul>
+        <li><code>getMenu(name)</code> &mdash; fetches a nav menu by registered name; returns a resolved tree with URLs interpolated for content and taxonomy items.</li>
+        <li><code>getMenus()</code> &mdash; lists all registered menu definitions (id, name, label).</li>
+      </ul>
+
+      <h2>Full-text search</h2>
+      <ul>
+        <li><code>search(query, options?)</code> &mdash; cross-collection FTS5 search.</li>
+        <li><code>searchCollection(db, collection, query, options?)</code> &mdash; scoped to one collection.</li>
+        <li><code>getSuggestions(db, query, options?)</code> &mdash; autocomplete for a partial query.</li>
+        <li><code>getSearchStats(db)</code> &mdash; indexed document counts + FTS5 health.</li>
+        <li><code>extractPlainText(portableTextBlocks)</code> &mdash; utility for building custom indexing pipelines.</li>
+      </ul>
+
+      <h2>Slug / URL utils</h2>
+      <h3><code>decodeSlug(raw)</code></h3>
+      <p>Decodes URI-encoded slug params. Use in <code>[slug].astro</code> before passing to <code>getEmDashEntry</code>.</p>
+<pre><code>import { decodeSlug, getEmDashEntry } from 'emdash';
+
+const { entry } = await getEmDashEntry('posts', decodeSlug(Astro.params.slug));</code></pre>
+
+      <h3><code>slugify(text, maxLength?)</code></h3>
+      <p>Text → URL-safe slug (lowercase, diacritics stripped, hyphens normalized). Default 80-char limit.</p>
+
+      <h2>i18n</h2>
+      <ul>
+        <li><code>getI18nConfig()</code> &mdash; the runtime i18n config, or <code>null</code>.</li>
+        <li><code>isI18nEnabled()</code> &mdash; boolean shortcut.</li>
+        <li><code>getFallbackChain(locale)</code> &mdash; ordered list of locales to try when content in the requested locale is absent.</li>
+      </ul>
+      <p><strong>I18nConfig:</strong> <code>{ defaultLocale, locales, fallback?, prefixDefaultLocale? }</code></p>
+
+      <h2>Page metadata / JSON-LD</h2>
+      <p>From <code>"emdash/page"</code>.</p>
+      <ul>
+        <li><code>getPageRuntime(locals)</code> &mdash; retrieves the page runtime from Astro <code>locals</code>; <code>undefined</code> when emdash isn't initialized.</li>
+        <li><code>buildBlogPostingJsonLd(...)</code> / <code>buildWebSiteJsonLd(...)</code> &mdash; structured-data builders.</li>
+        <li><code>safeJsonLdSerialize(data)</code> &mdash; escaping helper for inline <code>&lt;script type="application/ld+json"&gt;</code>.</li>
+        <li><code>resolvePageMetadata(...)</code> / <code>renderPageMetadata(...)</code> &mdash; plugin-contributed <code>&lt;head&gt;</code> metadata pipeline.</li>
+      </ul>
+
+      <h2>UI components</h2>
+      <p>Imported from <code>"emdash/ui"</code>. All are Astro components.</p>
+      <table>
+        <thead><tr><th>Component</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>&lt;Image /&gt;</code> (aka <code>&lt;EmDashImage /&gt;</code>)</td><td>Optimized media with aspect ratio, srcset, placeholder blur.</td></tr>
+          <tr><td><code>&lt;PortableText /&gt;</code></td><td>Renders Portable Text blocks. Accepts a <code>components</code> override map.</td></tr>
+          <tr><td><code>&lt;Comments /&gt;</code></td><td>Full threaded comment list.</td></tr>
+          <tr><td><code>&lt;CommentForm /&gt;</code></td><td>New-comment submission form.</td></tr>
+          <tr><td><code>&lt;WidgetArea /&gt;</code></td><td>Plugin-registered widget slots.</td></tr>
+          <tr><td><code>&lt;EmDashHead /&gt;</code></td><td>Injects plugin-contributed <code>&lt;head&gt;</code> tags.</td></tr>
+          <tr><td><code>&lt;EmDashBodyStart /&gt;</code> / <code>&lt;EmDashBodyEnd /&gt;</code></td><td>Plugin-contributed body fragments.</td></tr>
+          <tr><td><code>&lt;PTImage /&gt;</code>, <code>&lt;Code /&gt;</code>, <code>&lt;Embed /&gt;</code>, <code>&lt;Gallery /&gt;</code>, <code>&lt;Columns /&gt;</code>, <code>&lt;Break /&gt;</code>, <code>&lt;HtmlBlock /&gt;</code></td><td>Portable Text block renderers.</td></tr>
+          <tr><td><code>&lt;Superscript /&gt;</code>, <code>&lt;Subscript /&gt;</code>, <code>&lt;Underline /&gt;</code>, <code>&lt;StrikeThrough /&gt;</code>, <code>&lt;Link /&gt;</code></td><td>Portable Text mark renderers.</td></tr>
+        </tbody>
+      </table>
+      <p><code>emdash/ui</code> also re-exports <code>mergeComponents</code>, <code>usePortableText</code>, and all Portable Text types from <code>astro-portabletext</code>.</p>
+
+      <h2>Loader / runtime</h2>
+      <p>From <code>"emdash/runtime"</code>.</p>
+      <ul>
+        <li><code>emdashLoader()</code> &mdash; use inside <code>live.config.ts</code> with Astro's <code>defineLiveCollection</code>. Not for page code.</li>
+        <li><code>getDb()</code> &mdash; the ambient Kysely DB handle; for custom server routes and plugins.</li>
+      </ul>
+
+      <h2>Astro integration</h2>
+      <p>From <code>"emdash/astro"</code>.</p>
+      <ul>
+        <li>Default export: <code>emdash(config: EmDashConfig)</code> &mdash; register in <code>astro.config.ts</code>.</li>
+        <li><code>local(config?)</code> &mdash; local-filesystem storage factory for <code>EmDashConfig.storage</code>.</li>
+        <li><code>s3(config)</code> &mdash; S3-compatible storage factory.</li>
+      </ul>
+
+      <h2>Cloudflare adapters</h2>
+      <p>From <code>"@emdash-cms/cloudflare"</code>.</p>
+      <table>
+        <thead><tr><th>Export</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>cloudflareAdapter</code> (default)</td><td>Bundles all CF adapters as a preset.</td></tr>
+          <tr><td><code>d1(config?)</code></td><td>D1 database adapter.</td></tr>
+          <tr><td><code>previewDatabase(config)</code></td><td>Durable Object DB for preview/draft serving.</td></tr>
+          <tr><td><code>playgroundDatabase(config)</code></td><td>Durable Object DB for the sandbox.</td></tr>
+          <tr><td><code>r2(config)</code></td><td>R2 media storage adapter.</td></tr>
+          <tr><td><code>access(config)</code></td><td>Cloudflare Access JWT auth adapter.</td></tr>
+          <tr><td><code>sandbox()</code></td><td>Worker Loader plugin sandbox.</td></tr>
+          <tr><td><code>cloudflareImages(config)</code></td><td>Cloudflare Images media provider.</td></tr>
+          <tr><td><code>cloudflareStream(config)</code></td><td>Cloudflare Stream video provider.</td></tr>
+          <tr><td><code>cloudflareCache(config)</code></td><td>Cache API provider configuration.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Auth</h2>
+      <p>From <code>"@emdash-cms/auth"</code> and its sub-paths.</p>
+      <table>
+        <thead><tr><th>Path</th><th>Export</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>@emdash-cms/auth</code></td><td><code>createAuth(options)</code></td><td>Core auth initializer.</td></tr>
+          <tr><td><code>@emdash-cms/auth/passkey</code></td><td><code>passkeyProvider()</code></td><td>WebAuthn passkey auth.</td></tr>
+          <tr><td><code>@emdash-cms/auth/oauth/github</code></td><td><code>githubProvider(config)</code></td><td>GitHub OAuth.</td></tr>
+          <tr><td><code>@emdash-cms/auth/oauth/google</code></td><td><code>googleProvider(config)</code></td><td>Google OAuth.</td></tr>
+          <tr><td><code>@emdash-cms/auth/adapters/kysely</code></td><td><code>kyselyAdapter(db)</code></td><td>Kysely DB adapter for auth sessions.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Browser client</h2>
+      <p>From <code>"emdash/client"</code> &mdash; for client-side interactive features.</p>
+      <ul>
+        <li><code>EmDashClient</code> &mdash; typed HTTP client for all REST ops (CRUD on content, media, taxonomies, menus, schema). Handles CSRF, auth tokens, optimistic concurrency via <code>_rev</code>.</li>
+        <li><code>createTransport</code>, <code>csrfInterceptor</code>, <code>tokenInterceptor</code>, <code>devBypassInterceptor</code> &mdash; transport factory and interceptor helpers.</li>
+        <li><code>portableTextToMarkdown</code> / <code>markdownToPortableText</code> &mdash; Portable Text ↔ Markdown converters.</li>
+      </ul>
+
+      <h2>Notable gaps</h2>
+      <ul>
+        <li><strong>No built-in pagination component.</strong> Pagination is driven by consuming <code>nextCursor</code> from <code>CollectionResult</code> and passing it back as <code>cursor</code> in the next call.</li>
+        <li><strong>Portable Text rendering is via the UI component only.</strong> There's no server-side "render to HTML string" utility in the public API &mdash; use <code>&lt;PortableText /&gt;</code>.</li>
+        <li><strong>Import from the root, not sub-paths, for queries.</strong> <code>getEmDashCollection</code>, <code>getEmDashEntry</code>, <code>getEntryTerms</code>, <code>getSiteSettings</code> are all from <code>"emdash"</code> &mdash; not <code>"emdash/content"</code>. The <code>"emdash/content"</code> sub-path re-exports only the Portable Text / Prosemirror converters.</li>
+      </ul>
+
+      <nav class="pager">
+        <a class="prev" href="12-plugins.html">
+          <span class="direction">&larr; Prev</span>
+          <span class="title">Plugins</span>
+        </a>
+        <a class="next" href="14-troubleshooting.html">
+          <span class="direction">Next</span>
+          <span class="title">Troubleshooting &rarr;</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>

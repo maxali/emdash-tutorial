@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building for a new content type · emdash tutorial</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2><a href="index.html">emdash tutorial</a></h2>
+    <p class="tagline">Cloudflare · Astro · TypeScript</p>
+    <nav>
+      <ol>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="01-what-is-emdash.html">What is emdash?</a></li>
+        <li><a href="02-how-emdash-works.html">How emdash works</a></li>
+        <li><a href="03-cloudflare-primer.html">Cloudflare primer</a></li>
+        <li><a href="04-astro-primer.html">Astro primer</a></li>
+        <li><a href="05-getting-started.html">Getting started</a></li>
+        <li><a href="06-template-tour.html">Template tour</a></li>
+        <li><a href="07-content-modeling.html">Content modeling</a></li>
+        <li><a href="08-adding-pages.html">Adding pages</a></li>
+        <li><a href="09-customizing-templates.html">Customizing templates</a></li>
+        <li><a href="10-building-content-type.html" class="active">Building for a new content type</a></li>
+        <li><a href="11-deploying.html">Deploying to Cloudflare</a></li>
+        <li><a href="12-plugins.html">Plugins</a></li>
+        <li><a href="13-api-reference.html">API reference</a></li>
+        <li><a href="14-troubleshooting.html">Troubleshooting</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <main class="content">
+    <article>
+      <div class="eyebrow">Chapter 10 · Tutorial</div>
+      <h1>Building for a new content type</h1>
+      <p class="lede">Walk through the full loop &mdash; schema, types, list page, detail page, navigation, seed &mdash; by adding a <code>project</code> content type to the blog template.</p>
+
+      <div class="note">
+        <strong>What we're building.</strong> A <code>/projects</code> list page and <code>/projects/:slug</code> detail pages, powered by a new <code>project</code> content type defined entirely in the admin. We'll end with a typed, deployable feature.
+      </div>
+
+      <h2>Step 1 &mdash; Define the schema in the admin</h2>
+      <ol>
+        <li>Start the dev server: <code>pnpm dev</code>.</li>
+        <li>Open <a href="http://localhost:4321/_emdash/admin" target="_blank" rel="noopener"><code>http://localhost:4321/_emdash/admin</code></a>.</li>
+        <li>Go to <strong>Schemas &rarr; New Schema</strong>.</li>
+        <li>Name: <code>project</code>. Label: <code>Projects</code>.</li>
+        <li>Add fields:
+          <table>
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>title</code></td><td>Text</td><td>Yes</td><td>The project name</td></tr>
+              <tr><td><code>slug</code></td><td>Slug</td><td>Yes</td><td>Auto-derived from title</td></tr>
+              <tr><td><code>summary</code></td><td>Text (long)</td><td>Yes</td><td>One-line pitch for listing pages</td></tr>
+              <tr><td><code>cover</code></td><td>Image</td><td>No</td><td>Hero image</td></tr>
+              <tr><td><code>body</code></td><td>Rich text</td><td>Yes</td><td>Portable Text</td></tr>
+              <tr><td><code>tags</code></td><td>Array of Text</td><td>No</td><td>For filtering</td></tr>
+              <tr><td><code>url</code></td><td>URL</td><td>No</td><td>Link to the live project</td></tr>
+              <tr><td><code>publishedAt</code></td><td>DateTime</td><td>Yes</td><td>For sorting</td></tr>
+            </tbody>
+          </table>
+        </li>
+        <li>Save.</li>
+      </ol>
+      <p>emdash has now created the DB tables and exposed a new <code>project</code> type through the API.</p>
+
+      <h2>Step 2 &mdash; Regenerate types</h2>
+      <p>In a second terminal:</p>
+<pre><code>npx emdash types</code></pre>
+      <p>This writes TypeScript types for <code>project</code> so <code>getEmDashCollection('project')</code> gets full autocomplete.</p>
+
+      <h2>Step 3 &mdash; Create a few entries</h2>
+      <p>Back in the admin: <strong>Projects &rarr; New</strong>. Fill in a title, summary, upload a cover, write the body, add tags, set a date. Save as <strong>Published</strong>. Create 2&ndash;3 so your list page has something to render.</p>
+
+      <h2>Step 4 &mdash; Build the list page</h2>
+      <p>Create <code>src/pages/projects/index.astro</code>:</p>
+<pre><code>---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getEmDashCollection } from 'emdash';
+
+const { entries: projects } = await getEmDashCollection('project', {
+  status: 'published',
+  orderBy: { publishedAt: 'desc' },
+});
+---
+&lt;BaseLayout
+  title="Projects"
+  description="Things we've shipped."
+&gt;
+  &lt;section class="wrap"&gt;
+    &lt;h1&gt;Projects&lt;/h1&gt;
+
+    &lt;div class="grid"&gt;
+      {projects.map(p =&gt; (
+        &lt;a class="card" href={`/projects/${p.slug}`}&gt;
+          {p.data.cover &amp;&amp; (
+            &lt;img src={p.data.cover.url} alt={p.data.title} loading="lazy" /&gt;
+          )}
+          &lt;h2&gt;{p.data.title}&lt;/h2&gt;
+          &lt;p&gt;{p.data.summary}&lt;/p&gt;
+          {p.data.tags &amp;&amp; (
+            &lt;ul class="tags"&gt;
+              {p.data.tags.map(t =&gt; &lt;li&gt;{t}&lt;/li&gt;)}
+            &lt;/ul&gt;
+          )}
+        &lt;/a&gt;
+      ))}
+    &lt;/div&gt;
+  &lt;/section&gt;
+&lt;/BaseLayout&gt;
+
+&lt;style&gt;
+  .wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1rem; }
+  .grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .card { display: block; border: 1px solid var(--color-border); border-radius: 10px; overflow: hidden; color: inherit; text-decoration: none; }
+  .card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .card h2, .card p { padding: 0 1rem; }
+  .tags { list-style: none; padding: 0 1rem 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .tags li { font-size: 0.75rem; padding: 0.15rem 0.6rem; border-radius: 999px; background: var(--color-bg-muted); }
+&lt;/style&gt;</code></pre>
+
+      <p>Visit <code>/projects</code>. You should see your cards.</p>
+
+      <h2>Step 5 &mdash; Build the detail page</h2>
+      <p>Create <code>src/pages/projects/[slug].astro</code>:</p>
+<pre><code>---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getEmDashEntry, getEmDashCollection } from 'emdash';
+
+export async function getStaticPaths() {
+  const { entries: projects } = await getEmDashCollection('project', {
+    status: 'published',
+  });
+  return projects.map(p =&gt; ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const { entry: project } = await getEmDashEntry('project', slug);
+if (!project) return Astro.redirect('/404');
+---
+&lt;BaseLayout title={project.data.title} description={project.data.summary}&gt;
+  &lt;article class="prose"&gt;
+    {project.data.cover &amp;&amp; (
+      &lt;img src={project.data.cover.url} alt={project.data.title} /&gt;
+    )}
+    &lt;h1&gt;{project.data.title}&lt;/h1&gt;
+    &lt;p class="summary"&gt;{project.data.summary}&lt;/p&gt;
+    {project.data.url &amp;&amp; (
+      &lt;p&gt;&lt;a href={project.data.url} target="_blank" rel="noopener"&gt;Visit project &rarr;&lt;/a&gt;&lt;/p&gt;
+    )}
+    &lt;div set:html={project.renderedHtml} /&gt;
+  &lt;/article&gt;
+&lt;/BaseLayout&gt;</code></pre>
+
+      <h2>Step 6 &mdash; Add it to the nav</h2>
+      <p>Open <code>src/components/Header.astro</code>:</p>
+<pre><code>&lt;nav&gt;
+  &lt;a href="/"&gt;Home&lt;/a&gt;
+  &lt;a href="/posts"&gt;Posts&lt;/a&gt;
+  &lt;a href="/projects"&gt;Projects&lt;/a&gt;  {/* &larr; new */}
+  &lt;a href="/about"&gt;About&lt;/a&gt;
+&lt;/nav&gt;</code></pre>
+
+      <h2>Step 7 (optional) &mdash; Seed it for new contributors</h2>
+      <p>Add a <code>projects</code> array to <code>seed/seed.json</code> so teammates who clone the repo see sample data on first bootstrap:</p>
+<pre><code>{
+  "posts": [ /* ... existing ... */ ],
+  "projects": [
+    {
+      "slug": "orbit",
+      "title": "Orbit",
+      "summary": "A tiny scheduler for Cloudflare Cron Triggers.",
+      "publishedAt": "2026-03-01T00:00:00Z",
+      "status": "published",
+      "tags": ["tool", "cloudflare"],
+      "body": [
+        { "_type": "block", "children": [ { "_type": "span", "text": "Orbit is a zero-config..." } ] }
+      ]
+    }
+  ]
+}</code></pre>
+
+      <h2>Step 8 &mdash; Deploy</h2>
+      <ol>
+        <li>Push your code.</li>
+        <li>Run <code>pnpm deploy</code>.</li>
+        <li>Apply schema changes to production D1 (your template's remote migration script &mdash; see <a href="11-deploying.html">chapter 11</a>).</li>
+        <li>Visit the live <code>/projects</code>.</li>
+      </ol>
+
+      <h2>What you just practiced</h2>
+      <ul>
+        <li>Defining a schema without writing migrations.</li>
+        <li>Getting fully-typed content with <code>emdash types</code>.</li>
+        <li>Using <code>getEmDashCollection</code> with filters, sorts, and limits.</li>
+        <li>Building list + detail pages with Astro file routing.</li>
+        <li>Committing portable sample content to <code>seed.json</code>.</li>
+      </ul>
+      <p>Repeat this loop for every new content type your site needs.</p>
+
+      <nav class="pager">
+        <a class="prev" href="09-customizing-templates.html">
+          <span class="direction">&larr; Prev</span>
+          <span class="title">Customizing templates</span>
+        </a>
+        <a class="next" href="11-deploying.html">
+          <span class="direction">Next</span>
+          <span class="title">Deploying to Cloudflare &rarr;</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>

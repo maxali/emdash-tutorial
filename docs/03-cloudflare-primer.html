@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflare primer · emdash tutorial</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2><a href="index.html">emdash tutorial</a></h2>
+    <p class="tagline">Cloudflare · Astro · TypeScript</p>
+    <nav>
+      <ol>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="01-what-is-emdash.html">What is emdash?</a></li>
+        <li><a href="02-how-emdash-works.html">How emdash works</a></li>
+        <li><a href="03-cloudflare-primer.html" class="active">Cloudflare primer</a></li>
+        <li><a href="04-astro-primer.html">Astro primer</a></li>
+        <li><a href="05-getting-started.html">Getting started</a></li>
+        <li><a href="06-template-tour.html">Template tour</a></li>
+        <li><a href="07-content-modeling.html">Content modeling</a></li>
+        <li><a href="08-adding-pages.html">Adding pages</a></li>
+        <li><a href="09-customizing-templates.html">Customizing templates</a></li>
+        <li><a href="10-building-content-type.html">Building for a new content type</a></li>
+        <li><a href="11-deploying.html">Deploying to Cloudflare</a></li>
+        <li><a href="12-plugins.html">Plugins</a></li>
+        <li><a href="13-api-reference.html">API reference</a></li>
+        <li><a href="14-troubleshooting.html">Troubleshooting</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <main class="content">
+    <article>
+      <div class="eyebrow">Chapter 03</div>
+      <h1>Cloudflare in ten minutes</h1>
+      <p class="lede">emdash is Cloudflare-first. If you've never used Cloudflare's developer platform, this chapter is for you. If you have, skip to the next chapter.</p>
+
+      <h2>Sign up</h2>
+      <p>Go to <a href="https://dash.cloudflare.com" target="_blank" rel="noopener">dash.cloudflare.com</a> and create an account. <strong>No credit card is required</strong> for the free tier, which covers everything needed to try emdash:</p>
+      <ul>
+        <li><strong>Workers</strong>: 100,000 requests/day</li>
+        <li><strong>D1</strong>: up to 10 databases, 500 MB each</li>
+        <li><strong>KV</strong>: 100k reads, 1k writes per day</li>
+        <li><strong>R2</strong>: 10 GB storage, <strong>zero egress fees at every tier</strong></li>
+      </ul>
+      <div class="warn">
+        <strong>Plugins require the Paid plan.</strong> The only emdash feature that needs the $5/month Workers Paid plan is the sandboxed plugin system (it relies on Dynamic Workers / Worker Loader). Disable plugins and you stay on the free tier.
+      </div>
+
+      <h2>Cloudflare Workers</h2>
+      <p>A <strong>Worker</strong> is a JavaScript / TypeScript function that runs on Cloudflare's global network. Unlike AWS Lambda (containers, 100–1000 ms cold starts), Workers run inside <strong>V8 isolates</strong> &mdash; the same lightweight sandbox Chrome uses for browser tabs. Cold start: under 5 ms.</p>
+      <p>Hello world is a single file:</p>
+<pre><code>export default {
+  async fetch(request: Request, env: Env): Promise&lt;Response&gt; {
+    return new Response("Hello from the edge!");
+  }
+};</code></pre>
+      <p>No Express, no framework. <code>Request</code> and <code>Response</code> are standard Web APIs.</p>
+
+      <h2>The Wrangler CLI</h2>
+      <p><strong>Wrangler</strong> is how you build, run, and deploy Workers. It's an npm package:</p>
+<pre><code>npm install -g wrangler
+wrangler login          # opens a browser OAuth flow</code></pre>
+      <p>Commands you'll use constantly:</p>
+      <table>
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>wrangler dev</code></td><td>Local dev server (powered by <code>workerd</code>, the real runtime)</td></tr>
+          <tr><td><code>wrangler deploy</code></td><td>Pushes your Worker to Cloudflare's global network</td></tr>
+          <tr><td><code>wrangler d1 create &lt;name&gt;</code></td><td>Creates a D1 database and prints its ID</td></tr>
+          <tr><td><code>wrangler r2 bucket create &lt;name&gt;</code></td><td>Creates an R2 bucket</td></tr>
+          <tr><td><code>wrangler kv namespace create &lt;name&gt;</code></td><td>Creates a KV namespace</td></tr>
+          <tr><td><code>wrangler secret put &lt;KEY&gt;</code></td><td>Uploads an encrypted secret</td></tr>
+        </tbody>
+      </table>
+
+      <h2><code>wrangler.jsonc</code> &mdash; the project config</h2>
+      <p>Every Worker project has a <code>wrangler.jsonc</code> (or <code>wrangler.toml</code>). JSONC is the newer, recommended form &mdash; it supports JSON Schema validation in editors. A minimal emdash site's config looks roughly like this:</p>
+<pre><code>{
+  "name": "my-emdash-site",
+  "main": "./dist/_worker.js/index.js",
+  "compatibility_date": "2026-04-20",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": { "binding": "ASSETS", "directory": "./dist" },
+
+  "d1_databases": [
+    { "binding": "DB", "database_name": "my-emdash-db", "database_id": "&lt;paste-id-here&gt;" }
+  ],
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "my-emdash-media" }
+  ],
+  "kv_namespaces": [
+    { "binding": "SESSIONS", "id": "&lt;paste-id-here&gt;" }
+  ]
+}</code></pre>
+
+      <h2>Bindings &mdash; the single biggest concept</h2>
+      <p>A <strong>binding</strong> is how your Worker accesses Cloudflare services. You declare the relationship in <code>wrangler.jsonc</code>, and at runtime your code receives a ready-to-use client on the <code>env</code> object:</p>
+<pre><code>// env.DB        → D1 database client
+// env.MEDIA     → R2 bucket client
+// env.SESSIONS  → KV namespace client</code></pre>
+      <p>There are <strong>no connection strings and no API keys in your code</strong>. The platform injects the credentials, and you can't accidentally leak them in a log.</p>
+
+      <h2>The three storage services at a glance</h2>
+      <table>
+        <thead><tr><th>Service</th><th>What it is</th><th>When to use</th></tr></thead>
+        <tbody>
+          <tr><td><strong>D1</strong></td><td>SQLite at the edge, with global read replicas</td><td>Relational data &mdash; posts, users, comments. emdash's primary store.</td></tr>
+          <tr><td><strong>R2</strong></td><td>S3-compatible object storage, no egress fees</td><td>Files &mdash; images, video, uploads. emdash stores media here.</td></tr>
+          <tr><td><strong>KV</strong></td><td>Eventually-consistent key-value store</td><td>Read-heavy, flat data &mdash; sessions, feature flags, config.</td></tr>
+        </tbody>
+      </table>
+      <div class="tip">
+        <strong>Rule of thumb:</strong> D1 for rows, R2 for files, KV for tokens and small config.
+      </div>
+
+      <h2>Pages vs Workers &mdash; the 2025 merge</h2>
+      <p>Cloudflare used to have two products: <strong>Workers</strong> for logic and <strong>Pages</strong> for static sites. In 2025 they converged into "Workers with static assets." One Worker can now both serve your static HTML and run your SSR code. emdash uses this model: your Astro site builds to <code>dist/</code>, Wrangler uploads both the Worker script and the static assets in a single deploy.</p>
+
+      <h2>Local dev and Miniflare</h2>
+      <p><code>wrangler dev</code> runs your Worker locally using <strong>workerd</strong> &mdash; the exact same runtime Cloudflare uses in production. Local D1 becomes a local SQLite file, local R2 becomes a folder on disk, local KV is in-memory. You can develop fully offline, and behavior closely mirrors production.</p>
+      <p>If you need to test against real production resources (e.g., a seeded D1 database), run <code>wrangler dev --remote</code>.</p>
+
+      <nav class="pager">
+        <a class="prev" href="02-how-emdash-works.html">
+          <span class="direction">&larr; Prev</span>
+          <span class="title">How emdash works</span>
+        </a>
+        <a class="next" href="04-astro-primer.html">
+          <span class="direction">Next</span>
+          <span class="title">Astro primer &rarr;</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deploying to Cloudflare · emdash tutorial</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2><a href="index.html">emdash tutorial</a></h2>
+    <p class="tagline">Cloudflare · Astro · TypeScript</p>
+    <nav>
+      <ol>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="01-what-is-emdash.html">What is emdash?</a></li>
+        <li><a href="02-how-emdash-works.html">How emdash works</a></li>
+        <li><a href="03-cloudflare-primer.html">Cloudflare primer</a></li>
+        <li><a href="04-astro-primer.html">Astro primer</a></li>
+        <li><a href="05-getting-started.html">Getting started</a></li>
+        <li><a href="06-template-tour.html">Template tour</a></li>
+        <li><a href="07-content-modeling.html">Content modeling</a></li>
+        <li><a href="08-adding-pages.html">Adding pages</a></li>
+        <li><a href="09-customizing-templates.html">Customizing templates</a></li>
+        <li><a href="10-building-content-type.html">Building for a new content type</a></li>
+        <li><a href="11-deploying.html" class="active">Deploying to Cloudflare</a></li>
+        <li><a href="12-plugins.html">Plugins</a></li>
+        <li><a href="13-api-reference.html">API reference</a></li>
+        <li><a href="14-troubleshooting.html">Troubleshooting</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <main class="content">
+    <article>
+      <div class="eyebrow">Chapter 11</div>
+      <h1>Deploying to Cloudflare</h1>
+      <p class="lede">From <code>wrangler login</code> to a live URL. Assumes you chose the <code>-cloudflare</code> variant of a template.</p>
+
+      <h2>Step 1 &mdash; Create the Cloudflare resources</h2>
+      <p>You need a D1 database, an R2 bucket, and a KV namespace.</p>
+<pre><code># From inside your project directory
+wrangler d1 create my-emdash-db
+# → copy the database_id it prints
+
+wrangler r2 bucket create my-emdash-media
+
+wrangler kv namespace create SESSIONS
+# → copy the id it prints</code></pre>
+
+      <h2>Step 2 &mdash; Wire up <code>wrangler.jsonc</code></h2>
+      <p>Open <code>wrangler.jsonc</code> in your project and paste the IDs into the respective bindings:</p>
+<pre><code>{
+  "name": "my-emdash-site",
+  "main": "./dist/_worker.js/index.js",
+  "compatibility_date": "2026-04-20",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": { "binding": "ASSETS", "directory": "./dist" },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "my-emdash-db",
+      "database_id": "&lt;paste-d1-id&gt;"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "my-emdash-media" }
+  ],
+  "kv_namespaces": [
+    { "binding": "SESSIONS", "id": "&lt;paste-kv-id&gt;" }
+  ]
+
+  // If you are on the free plan, remove or comment out any
+  // "worker_loaders" block — it requires the Workers Paid plan.
+}</code></pre>
+
+      <h2>Step 3 &mdash; Run migrations against production D1</h2>
+      <p>Your template's <code>package.json</code> includes scripts for preparing remote D1. The exact script name can vary (<code>pnpm db:migrate</code>, <code>pnpm emdash:init:remote</code>, etc.) &mdash; check your template's <code>package.json</code>. The general pattern is:</p>
+<pre><code># Apply the emdash schema to your remote D1 database
+pnpm bootstrap --remote    # template-specific: check package.json scripts
+# Optionally seed production with starter content
+pnpm seed --remote         # same caveat</code></pre>
+      <div class="note">
+        <strong>Under the hood,</strong> these commands use Wrangler's D1 query API (<code>wrangler d1 execute DB --remote --file=...</code>) to run the generated migrations against your actual Cloudflare database.
+      </div>
+
+      <h2>Step 4 &mdash; Deploy</h2>
+<pre><code>pnpm deploy</code></pre>
+      <p>This runs <code>astro build</code> and then <code>wrangler deploy</code>. Within seconds your site is live on <code>*.workers.dev</code> (or your custom domain if configured). Wrangler prints the URL.</p>
+
+      <h2>Step 5 &mdash; Set up the production admin</h2>
+      <p>Visit <code>https://&lt;your-worker&gt;.workers.dev/_emdash/admin</code>. The setup wizard runs once, you register a passkey, and you're the admin.</p>
+
+      <h2>Step 6 (optional) &mdash; Protect the admin with Cloudflare Access</h2>
+      <p>If you want zero-trust SSO on top of emdash's built-in auth:</p>
+      <ol>
+        <li>In the Cloudflare dashboard, go to <strong>Zero Trust &rarr; Access &rarr; Applications &rarr; Add application</strong>.</li>
+        <li>Create a <strong>Self-hosted application</strong> with path <code>/_emdash/*</code>.</li>
+        <li>Add a policy, e.g. <em>"Emails matching <code>*@yourcompany.com</code>"</em>.</li>
+        <li>Pick an identity provider (GitHub, Google, one-time PIN via email).</li>
+      </ol>
+      <p>Now only authorized users even reach the admin URL &mdash; requests are rejected at Cloudflare's edge before touching your Worker.</p>
+
+      <h2>The feedback loop</h2>
+      <table>
+        <thead><tr><th>Cycle</th><th>Command</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td>Fast dev</td><td><code>pnpm dev</code></td><td>Local <code>workerd</code> + local SQLite file</td></tr>
+          <tr><td>Production parity</td><td><code>pnpm dev --remote</code></td><td>Local code, real D1/R2/KV</td></tr>
+          <tr><td>Ship</td><td><code>pnpm deploy</code></td><td>Cloudflare global network</td></tr>
+        </tbody>
+      </table>
+
+      <div class="tip">
+        <strong>Custom domains.</strong> In the Cloudflare dashboard, open your Worker &rarr; <em>Settings &rarr; Triggers &rarr; Custom Domains</em>. Add your domain; Cloudflare issues the certificate automatically if the domain is managed by Cloudflare DNS.
+      </div>
+
+      <nav class="pager">
+        <a class="prev" href="10-building-content-type.html">
+          <span class="direction">&larr; Prev</span>
+          <span class="title">Building for a new content type</span>
+        </a>
+        <a class="next" href="12-plugins.html">
+          <span class="direction">Next</span>
+          <span class="title">Plugins &rarr;</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>

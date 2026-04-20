@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "emdash-tutorial",
+  "compatibility_date": "2026-04-20",
+
+  // This is a pure static site — no Worker script. Cloudflare serves
+  // the files in ./docs directly from its global edge network.
+  "assets": {
+    "directory": "./docs",
+    // Requests like /08-adding-pages resolve to 08-adding-pages.html
+    "html_handling": "auto-trailing-slash",
+    // Unknown paths render the single-page 404 with the full tutorial styling
+    "not_found_handling": "404-page"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

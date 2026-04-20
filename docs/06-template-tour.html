@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template tour · emdash tutorial</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2><a href="index.html">emdash tutorial</a></h2>
+    <p class="tagline">Cloudflare · Astro · TypeScript</p>
+    <nav>
+      <ol>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="01-what-is-emdash.html">What is emdash?</a></li>
+        <li><a href="02-how-emdash-works.html">How emdash works</a></li>
+        <li><a href="03-cloudflare-primer.html">Cloudflare primer</a></li>
+        <li><a href="04-astro-primer.html">Astro primer</a></li>
+        <li><a href="05-getting-started.html">Getting started</a></li>
+        <li><a href="06-template-tour.html" class="active">Template tour</a></li>
+        <li><a href="07-content-modeling.html">Content modeling</a></li>
+        <li><a href="08-adding-pages.html">Adding pages</a></li>
+        <li><a href="09-customizing-templates.html">Customizing templates</a></li>
+        <li><a href="10-building-content-type.html">Building for a new content type</a></li>
+        <li><a href="11-deploying.html">Deploying to Cloudflare</a></li>
+        <li><a href="12-plugins.html">Plugins</a></li>
+        <li><a href="13-api-reference.html">API reference</a></li>
+        <li><a href="14-troubleshooting.html">Troubleshooting</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <main class="content">
+    <article>
+      <div class="eyebrow">Chapter 06</div>
+      <h1>Template tour</h1>
+      <p class="lede">A tour of the five official emdash templates, what they ship, and how a page actually reads content.</p>
+
+      <p>All templates ship in two flavors: a Node.js variant and a <code>-cloudflare</code> variant. They share this structure:</p>
+<pre><code>my-blog/
+├── src/
+│   ├── components/       # reusable UI (PostCard, Header, Footer)
+│   ├── layouts/          # BaseLayout.astro
+│   ├── pages/            # public routes
+│   │   ├── index.astro
+│   │   ├── posts/[slug].astro
+│   │   ├── category/[slug].astro
+│   │   ├── tag/[slug].astro
+│   │   ├── search.astro
+│   │   ├── rss.xml.ts
+│   │   └── 404.astro
+│   ├── styles/
+│   ├── utils/
+│   └── live.config.ts    # emdash content collection hookup
+├── seed/
+│   └── seed.json         # initial content loaded by `emdash seed`
+├── astro.config.mjs
+├── wrangler.jsonc        # only in -cloudflare variants
+├── package.json
+└── tsconfig.json</code></pre>
+
+      <h2>The five templates</h2>
+      <table>
+        <thead><tr><th>Template</th><th>Best for</th><th>Notable pages</th></tr></thead>
+        <tbody>
+          <tr><td><strong>blog</strong></td><td>Full blog: search, RSS, categories, tags, dark mode</td><td><code>posts/</code>, <code>category/</code>, <code>tag/</code>, <code>search.astro</code>, <code>rss.xml.ts</code></td></tr>
+          <tr><td><strong>marketing</strong></td><td>Landing site: hero, pricing, FAQ, contact form</td><td><code>index.astro</code>, <code>pricing.astro</code>, <code>contact.astro</code></td></tr>
+          <tr><td><strong>portfolio</strong></td><td>Creative showcase: project grid, case studies</td><td><code>work/</code>, <code>about.astro</code>, <code>contact.astro</code></td></tr>
+          <tr><td><strong>starter</strong></td><td>Minimal, unopinionated foundation</td><td><code>index.astro</code>, <code>[slug].astro</code>, <code>posts/</code></td></tr>
+          <tr><td><strong>blank</strong></td><td>Empty canvas &mdash; only wires emdash up</td><td>just <code>index.astro</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Node vs Cloudflare variants</h2>
+      <p>Same templates, different infrastructure. The only differences:</p>
+      <table>
+        <thead><tr><th>Concern</th><th>Node variant</th><th>Cloudflare variant</th></tr></thead>
+        <tbody>
+          <tr><td>Adapter</td><td><code>@astrojs/node</code></td><td><code>@astrojs/cloudflare</code></td></tr>
+          <tr><td>Database</td><td><code>better-sqlite3</code> → <code>./data.db</code></td><td>D1 via <code>DB</code> binding</td></tr>
+          <tr><td>Media</td><td>local <code>./uploads/</code></td><td>R2 via <code>MEDIA</code> binding</td></tr>
+          <tr><td>Deploy</td><td><code>node ./dist/server/entry.mjs</code></td><td><code>wrangler deploy</code></td></tr>
+          <tr><td>Extra dep</td><td>&mdash;</td><td><code>@emdash-cms/cloudflare</code>, <code>@cloudflare/workers-types</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>A real page walk-through</h2>
+      <p>Here's what a post page in the <code>blog</code> template actually looks like:</p>
+<pre><code>---
+// src/pages/posts/[slug].astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getEmDashEntry, getEmDashCollection } from 'emdash';
+
+export async function getStaticPaths() {
+  const { entries: posts } = await getEmDashCollection('post');
+  return posts.map(p =&gt; ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const { entry: post } = await getEmDashEntry('post', slug);
+
+if (!post) return Astro.redirect('/404');
+---
+&lt;BaseLayout title={post.data.title}&gt;
+  &lt;article&gt;
+    &lt;h1&gt;{post.data.title}&lt;/h1&gt;
+    &lt;time&gt;{post.data.publishedAt}&lt;/time&gt;
+    &lt;div set:html={post.renderedHtml} /&gt;
+  &lt;/article&gt;
+&lt;/BaseLayout&gt;</code></pre>
+
+      <p>Two things to notice:</p>
+      <ol>
+        <li><code>getEmDashCollection</code> / <code>getEmDashEntry</code> are the primary API you'll use.</li>
+        <li>Content is stored as Portable Text but rendered to HTML by the loader, so you can use <code>set:html</code> or a typed component renderer for richer control.</li>
+      </ol>
+
+      <div class="note">
+        <strong>Seed data.</strong> Every template (except <code>blank</code>) ships a <code>seed/seed.json</code> file that's loaded by <code>pnpm bootstrap</code>. This gives you a working site immediately &mdash; even before you touch the admin.
+      </div>
+
+      <nav class="pager">
+        <a class="prev" href="05-getting-started.html">
+          <span class="direction">&larr; Prev</span>
+          <span class="title">Getting started</span>
+        </a>
+        <a class="next" href="07-content-modeling.html">
+          <span class="direction">Next</span>
+          <span class="title">Content modeling &rarr;</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>

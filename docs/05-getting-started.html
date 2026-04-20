@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting started · emdash tutorial</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2><a href="index.html">emdash tutorial</a></h2>
+    <p class="tagline">Cloudflare · Astro · TypeScript</p>
+    <nav>
+      <ol>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="01-what-is-emdash.html">What is emdash?</a></li>
+        <li><a href="02-how-emdash-works.html">How emdash works</a></li>
+        <li><a href="03-cloudflare-primer.html">Cloudflare primer</a></li>
+        <li><a href="04-astro-primer.html">Astro primer</a></li>
+        <li><a href="05-getting-started.html" class="active">Getting started</a></li>
+        <li><a href="06-template-tour.html">Template tour</a></li>
+        <li><a href="07-content-modeling.html">Content modeling</a></li>
+        <li><a href="08-adding-pages.html">Adding pages</a></li>
+        <li><a href="09-customizing-templates.html">Customizing templates</a></li>
+        <li><a href="10-building-content-type.html">Building for a new content type</a></li>
+        <li><a href="11-deploying.html">Deploying to Cloudflare</a></li>
+        <li><a href="12-plugins.html">Plugins</a></li>
+        <li><a href="13-api-reference.html">API reference</a></li>
+        <li><a href="14-troubleshooting.html">Troubleshooting</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <main class="content">
+    <article>
+      <div class="eyebrow">Chapter 05</div>
+      <h1>Getting started</h1>
+      <p class="lede">Scaffold your first emdash site in under five minutes.</p>
+
+      <h2>Prerequisites</h2>
+      <ul>
+        <li><strong>Node.js 22+</strong></li>
+        <li><strong>pnpm 10+</strong> &mdash; enable with <code>corepack enable</code></li>
+        <li>A <strong>Cloudflare account</strong> (free tier is fine)</li>
+        <li><strong>Wrangler</strong> &mdash; <code>npm install -g wrangler && wrangler login</code></li>
+      </ul>
+
+      <h2>1. Create a project</h2>
+<pre><code>npm create emdash@latest</code></pre>
+      <p>You'll be asked:</p>
+      <ol>
+        <li>A <strong>template</strong> &mdash; <code>blog</code>, <code>marketing</code>, <code>portfolio</code>, <code>starter</code>, or <code>blank</code>.</li>
+        <li>A <strong>deployment target</strong> &mdash; <code>node</code> (local SQLite, for self-hosting) or <code>cloudflare</code> (D1 + R2 + KV).</li>
+      </ol>
+      <p>For this tutorial, pick <code>blog</code> + <code>cloudflare</code>.</p>
+
+      <h2>2. Bootstrap</h2>
+<pre><code>cd my-site
+pnpm install
+pnpm bootstrap   # runs: emdash init &amp;&amp; emdash seed
+pnpm dev</code></pre>
+      <p>What just happened:</p>
+      <ul>
+        <li><code>emdash init</code> creates the database schema and migrations.</li>
+        <li><code>emdash seed</code> loads starter content from <code>seed/seed.json</code>.</li>
+        <li><code>pnpm dev</code> starts Astro's dev server (using <code>workerd</code> on the Cloudflare variant).</li>
+      </ul>
+
+      <h2>3. Open the admin</h2>
+      <p>Visit <a href="http://localhost:4321/_emdash/admin" target="_blank" rel="noopener"><code>http://localhost:4321/_emdash/admin</code></a>.</p>
+      <p>On first visit, a setup wizard creates an admin account via passkey. If you want to skip passkey setup during local dev, use the bypass URL:</p>
+<pre><code>http://localhost:4321/_emdash/api/setup/dev-bypass?redirect=/_emdash/admin</code></pre>
+
+      <h2>4. See your site</h2>
+      <p>Your public site is at <a href="http://localhost:4321" target="_blank" rel="noopener"><code>http://localhost:4321</code></a>. Edit a post in the admin, refresh the homepage, see the change.</p>
+
+      <div class="tip">
+        <strong>What's the <code>_emdash</code> prefix?</strong> All emdash admin and API routes live under <code>/_emdash/</code>. This keeps them out of the way of your own routes &mdash; you can build a <code>/admin</code> page of your own without colliding.
+      </div>
+
+      <h2>What a first session looks like</h2>
+      <ol>
+        <li>Open <code>src/pages/index.astro</code> and change a heading. The browser hot-reloads.</li>
+        <li>Go to the admin, edit a post title, hit save. Refresh the public page.</li>
+        <li>Open <code>astro.config.mjs</code> and see the emdash integration registered.</li>
+        <li>Open <code>src/live.config.ts</code> and see the <code>_emdash</code> live collection.</li>
+        <li>Browse to <code>/_emdash/admin/schemas</code> and look at the default content types.</li>
+      </ol>
+
+      <nav class="pager">
+        <a class="prev" href="04-astro-primer.html">
+          <span class="direction">&larr; Prev</span>
+          <span class="title">Astro primer</span>
+        </a>
+        <a class="next" href="06-template-tour.html">
+          <span class="direction">Next</span>
+          <span class="title">Template tour &rarr;</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>

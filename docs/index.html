@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>emdash tutorial · An editorial guide</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar"></aside>
+  <main class="content">
+    <article>
+      <section class="hero">
+        <div class="kicker">A developer's guide · Revised Apr 2026 · v1</div>
+        <h1>em<em>—</em>dash</h1>
+        <p class="hero-deck">An editorial walkthrough of the open-source CMS that wants to succeed WordPress — built on <em>Astro</em> and <em>Cloudflare Workers</em>.</p>
+        <div class="hero-stats">
+          <span>14 chapters</span>
+          <span>~90 min read</span>
+          <span>MIT licensed</span>
+          <span>Beta · 2026</span>
+        </div>
+      </section>
+
+      <div class="intro-card">
+        <p style="margin: 0;"><strong>Start here.</strong> This guide is modular. If you already know Cloudflare, skip chapter 3. If you already use Astro, skip chapter 4. Otherwise, read straight through — every chapter links to the next.</p>
+      </div>
+
+      <section class="toc-section">
+        <h2 class="toc-section-title">Foundations <span class="tag">·  Chapters 01–04</span></h2>
+        <p class="toc-section-desc">What emdash is, why it exists, and the platforms it rides on.</p>
+        <div class="toc-grid">
+          <a href="01-what-is-emdash.html" class="toc-card">
+            <span class="num">Chapter 01 <span class="card-badge">Concept</span></span>
+            <span class="title">What is emdash?</span>
+            <span class="desc">The pitch, the license, and the four WordPress problems it targets.</span>
+          </a>
+          <a href="02-how-emdash-works.html" class="toc-card">
+            <span class="num">Chapter 02 <span class="card-badge">Concept</span></span>
+            <span class="title">How emdash works</span>
+            <span class="desc">The mental model — an Astro integration with D1 / R2 / KV bindings and a plugin sandbox.</span>
+          </a>
+          <a href="03-cloudflare-primer.html" class="toc-card">
+            <span class="num">Chapter 03 <span class="card-badge">Concept</span></span>
+            <span class="title">Cloudflare primer</span>
+            <span class="desc">Workers, Wrangler, D1, R2, KV, and the bindings concept — all in ten minutes.</span>
+          </a>
+          <a href="04-astro-primer.html" class="toc-card">
+            <span class="num">Chapter 04 <span class="card-badge">Concept</span></span>
+            <span class="title">Astro primer</span>
+            <span class="desc">Islands, content collections, the Cloudflare adapter, and emdash's two hook files.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="toc-section">
+        <h2 class="toc-section-title">Get started <span class="tag">·  Chapters 05–06</span></h2>
+        <p class="toc-section-desc">From scaffold to a running dev server in five minutes.</p>
+        <div class="toc-grid">
+          <a href="05-getting-started.html" class="toc-card">
+            <span class="num">Chapter 05 <span class="card-badge">Guide</span></span>
+            <span class="title">Getting started</span>
+            <span class="desc">Scaffold your first emdash site, bootstrap the DB, and open the admin panel.</span>
+          </a>
+          <a href="06-template-tour.html" class="toc-card">
+            <span class="num">Chapter 06 <span class="card-badge">Guide</span></span>
+            <span class="title">Template tour</span>
+            <span class="desc">The five starter templates, their structure, and the Node vs Cloudflare split.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="toc-section">
+        <h2 class="toc-section-title">Build <span class="tag">·  Chapters 07–10</span></h2>
+        <p class="toc-section-desc">Hands-on tutorials. You'll come out with a real, typed, extensible site.</p>
+        <div class="toc-grid">
+          <a href="07-content-modeling.html" class="toc-card">
+            <span class="num">Chapter 07 <span class="card-badge">Guide</span></span>
+            <span class="title">Content modeling</span>
+            <span class="desc">Define content types in the admin, regenerate types, query them from pages.</span>
+          </a>
+          <a href="08-adding-pages.html" class="toc-card">
+            <span class="num">Chapter 08 <span class="card-badge">Tutorial</span></span>
+            <span class="title">Adding pages</span>
+            <span class="desc">Add static, dynamic, and filtered pages. Plus JSON and RSS endpoints.</span>
+          </a>
+          <a href="09-customizing-templates.html" class="toc-card">
+            <span class="num">Chapter 09 <span class="card-badge">Tutorial</span></span>
+            <span class="title">Customizing templates</span>
+            <span class="desc">Change colors, fonts, layouts, components, and seed content.</span>
+          </a>
+          <a href="10-building-content-type.html" class="toc-card">
+            <span class="num">Chapter 10 <span class="card-badge">Tutorial</span></span>
+            <span class="title">Building for a new content type</span>
+            <span class="desc">End-to-end build of a <code>project</code> type: schema, types, list, detail, deploy.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="toc-section">
+        <h2 class="toc-section-title">Ship <span class="tag">·  Chapters 11–12</span></h2>
+        <p class="toc-section-desc">Push to Cloudflare, extend with plugins.</p>
+        <div class="toc-grid">
+          <a href="11-deploying.html" class="toc-card">
+            <span class="num">Chapter 11 <span class="card-badge">Guide</span></span>
+            <span class="title">Deploying to Cloudflare</span>
+            <span class="desc">From <code>wrangler login</code> to a live URL — step by step.</span>
+          </a>
+          <a href="12-plugins.html" class="toc-card">
+            <span class="num">Chapter 12 <span class="card-badge">Concept</span></span>
+            <span class="title">Plugins</span>
+            <span class="desc">The V8-sandboxed plugin model, first-party plugins, and the built-in MCP server.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="toc-section">
+        <h2 class="toc-section-title">Reference <span class="tag">·  Chapters 13–14</span></h2>
+        <p class="toc-section-desc">Come back to these when you're searching for a specific function or fix.</p>
+        <div class="toc-grid">
+          <a href="13-api-reference.html" class="toc-card">
+            <span class="num">Chapter 13 <span class="card-badge">Ref</span></span>
+            <span class="title">API reference</span>
+            <span class="desc">Every public export from <code>emdash</code> and friends — content, taxonomy, settings, SEO, search.</span>
+          </a>
+          <a href="14-troubleshooting.html" class="toc-card">
+            <span class="num">Chapter 14 <span class="card-badge">Ref</span></span>
+            <span class="title">Troubleshooting</span>
+            <span class="desc">Common gotchas, further reading, and a 5-day learning path.</span>
+          </a>
+        </div>
+      </section>
+
+      <section style="margin-top: 96px; padding-top: 32px; border-top: 1px solid var(--rule);">
+        <h2 style="border-top: 0; margin-top: 0; padding-top: 0;">How to read this</h2>
+        <p>The chapters are ordered, but modular. Open the sidebar on the left to jump around, or use the <strong>Next</strong> button at the bottom of every page for a linear path. Tap <kbd style="font-family: var(--f-mono); font-size: 11px; padding: 2px 6px; background: var(--paper-hard); border: 1px solid var(--rule); border-radius: 3px;">⌘K</kbd> (or <kbd style="font-family: var(--f-mono); font-size: 11px; padding: 2px 6px; background: var(--paper-hard); border: 1px solid var(--rule); border-radius: 3px;">/</kbd>) any time to search across every chapter and section.</p>
+        <p><strong>Keyboard shortcuts.</strong> <kbd style="font-family: var(--f-mono); font-size: 11px; padding: 2px 6px; background: var(--paper-hard); border: 1px solid var(--rule); border-radius: 3px;">J</kbd> or <kbd style="font-family: var(--f-mono); font-size: 11px; padding: 2px 6px; background: var(--paper-hard); border: 1px solid var(--rule); border-radius: 3px;">→</kbd> for next chapter, <kbd style="font-family: var(--f-mono); font-size: 11px; padding: 2px 6px; background: var(--paper-hard); border: 1px solid var(--rule); border-radius: 3px;">K</kbd> or <kbd style="font-family: var(--f-mono); font-size: 11px; padding: 2px 6px; background: var(--paper-hard); border: 1px solid var(--rule); border-radius: 3px;">←</kbd> for previous.</p>
+      </section>
+
+      <nav class="pager">
+        <span class="prev-placeholder"></span>
+        <a class="next" href="01-what-is-emdash.html">
+          <span class="direction">Begin</span>
+          <span class="title">Chapter 01 — What is emdash? →</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>

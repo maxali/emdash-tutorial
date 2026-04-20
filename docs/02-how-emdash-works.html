@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How emdash works · emdash tutorial</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2><a href="index.html">emdash tutorial</a></h2>
+    <p class="tagline">Cloudflare · Astro · TypeScript</p>
+    <nav>
+      <ol>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="01-what-is-emdash.html">What is emdash?</a></li>
+        <li><a href="02-how-emdash-works.html" class="active">How emdash works</a></li>
+        <li><a href="03-cloudflare-primer.html">Cloudflare primer</a></li>
+        <li><a href="04-astro-primer.html">Astro primer</a></li>
+        <li><a href="05-getting-started.html">Getting started</a></li>
+        <li><a href="06-template-tour.html">Template tour</a></li>
+        <li><a href="07-content-modeling.html">Content modeling</a></li>
+        <li><a href="08-adding-pages.html">Adding pages</a></li>
+        <li><a href="09-customizing-templates.html">Customizing templates</a></li>
+        <li><a href="10-building-content-type.html">Building for a new content type</a></li>
+        <li><a href="11-deploying.html">Deploying to Cloudflare</a></li>
+        <li><a href="12-plugins.html">Plugins</a></li>
+        <li><a href="13-api-reference.html">API reference</a></li>
+        <li><a href="14-troubleshooting.html">Troubleshooting</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <main class="content">
+    <article>
+      <div class="eyebrow">Chapter 02</div>
+      <h1>How emdash works</h1>
+      <p class="lede">The one architectural fact that makes everything else click: emdash is not a standalone application. It's an Astro integration.</p>
+
+      <p>You install emdash into any Astro project. When you run that project, the integration:</p>
+      <ol>
+        <li>Mounts an admin panel at <code>/_emdash/admin</code> (React + TipTap editor).</li>
+        <li>Creates a database schema, runs migrations, and exposes a content API.</li>
+        <li>Registers an Astro <em>live</em> content collection called <code>_emdash</code> that your pages query.</li>
+        <li>Optionally starts a plugin sandbox runner powered by Cloudflare's Dynamic Workers.</li>
+      </ol>
+
+      <h2>The picture</h2>
+<pre><code>┌──────────────────────── Your Astro Site ─────────────────────────┐
+│                                                                  │
+│   src/pages/              ← your public routes                   │
+│       index.astro                                                │
+│       posts/[slug].astro  ← calls getEmDashCollection("post")    │
+│                                                                  │
+│   src/live.config.ts      ← registers the emdash loader          │
+│                                                                  │
+│   astro.config.mjs        ← adds the emdash integration          │
+│        + @astrojs/cloudflare adapter                             │
+└──────────────────────────────┬───────────────────────────────────┘
+                               │  at build &amp; runtime
+                               ▼
+┌─────────────────────── emdash integration ───────────────────────┐
+│                                                                  │
+│   /_emdash/admin          React admin UI, passkey auth           │
+│   /_emdash/api/*          Content, media, auth, setup endpoints  │
+│                                                                  │
+│   DB  → D1  (Kysely ORM)  posts, pages, media, users, schemas    │
+│   R2  → MEDIA bucket       uploads, images                       │
+│   KV  → SESSIONS namespace auth sessions                         │
+│   Worker Loader → plugins  isolated V8 sandboxes (paid plan)     │
+└──────────────────────────────────────────────────────────────────┘</code></pre>
+
+      <h2>Three ideas to remember</h2>
+
+      <h3>1. Content lives in a relational DB, not in files</h3>
+      <p>Most Astro CMSes store content as markdown files in <code>src/content/</code>. emdash is different. Your content is <strong>rows in D1</strong> (or SQLite/Postgres), stored as <strong>Portable Text</strong> &mdash; a structured JSON format. The admin UI reads and writes those rows. Developers can still commit seed data (<code>seed/seed.json</code>), but the source of truth at runtime is the database.</p>
+
+      <h3>2. Pages consume content through one live collection</h3>
+      <p>You don't call the usual Astro <code>getCollection("posts")</code>. Instead you call <code>getEmDashCollection("posts")</code>, which queries the database through emdash's loader. Under the hood this is an Astro "live" content collection &mdash; new in Astro 6 &mdash; which lets collections resolve at request time instead of only at build time.</p>
+
+      <h3>3. Plugins are sandboxed</h3>
+      <p>Every plugin runs in its own V8 isolate and declares a capability manifest up front. A plugin that didn't declare <code>write:content.page</code> <em>cannot</em> write to pages &mdash; not in a sneaky way, not ever. This is the defining architectural difference from WordPress, where any plugin can <code>DROP TABLE users</code>.</p>
+
+      <h2>The five files that shape any emdash site</h2>
+      <p>Once these are in your head, everything else is decoration:</p>
+      <table>
+        <thead><tr><th>File</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td><code>astro.config.mjs</code></td><td>Registers the emdash integration and the Cloudflare adapter.</td></tr>
+          <tr><td><code>src/live.config.ts</code></td><td>Defines the <code>_emdash</code> live content collection.</td></tr>
+          <tr><td><code>wrangler.jsonc</code></td><td>Declares D1 / R2 / KV bindings. (Cloudflare variant only.)</td></tr>
+          <tr><td><code>seed/seed.json</code></td><td>Initial content loaded by <code>emdash seed</code>.</td></tr>
+          <tr><td><code>src/pages/*.astro</code></td><td>Your public UI; calls <code>getEmDashCollection</code> / <code>getEmDashEntry</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <nav class="pager">
+        <a class="prev" href="01-what-is-emdash.html">
+          <span class="direction">&larr; Prev</span>
+          <span class="title">What is emdash?</span>
+        </a>
+        <a class="next" href="03-cloudflare-primer.html">
+          <span class="direction">Next</span>
+          <span class="title">Cloudflare primer &rarr;</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>

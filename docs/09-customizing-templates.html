@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customizing templates · emdash tutorial</title>
+<link rel="stylesheet" href="styles.css?v=69097eea6f">
+<script>(function(){try{var m=localStorage.getItem("emdash-theme-mode");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m);document.documentElement.setAttribute("data-theme-mode",m||"auto");}catch(e){}})();</script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2><a href="index.html">emdash tutorial</a></h2>
+    <p class="tagline">Cloudflare · Astro · TypeScript</p>
+    <nav>
+      <ol>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="01-what-is-emdash.html">What is emdash?</a></li>
+        <li><a href="02-how-emdash-works.html">How emdash works</a></li>
+        <li><a href="03-cloudflare-primer.html">Cloudflare primer</a></li>
+        <li><a href="04-astro-primer.html">Astro primer</a></li>
+        <li><a href="05-getting-started.html">Getting started</a></li>
+        <li><a href="06-template-tour.html">Template tour</a></li>
+        <li><a href="07-content-modeling.html">Content modeling</a></li>
+        <li><a href="08-adding-pages.html">Adding pages</a></li>
+        <li><a href="09-customizing-templates.html" class="active">Customizing templates</a></li>
+        <li><a href="10-building-content-type.html">Building for a new content type</a></li>
+        <li><a href="11-deploying.html">Deploying to Cloudflare</a></li>
+        <li><a href="12-plugins.html">Plugins</a></li>
+        <li><a href="13-api-reference.html">API reference</a></li>
+        <li><a href="14-troubleshooting.html">Troubleshooting</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <main class="content">
+    <article>
+      <div class="eyebrow">Chapter 09 · Tutorial</div>
+      <h1>Customizing templates</h1>
+      <p class="lede">Templates are not magic &mdash; they're just Astro projects. Anything you'd change in a regular Astro site, you can change here. This chapter walks through the five most common customizations.</p>
+
+      <h2>The four places you'll edit</h2>
+      <table>
+        <thead><tr><th>To change...</th><th>Edit...</th></tr></thead>
+        <tbody>
+          <tr><td>Site-wide colors, fonts, spacing</td><td><code>src/styles/global.css</code></td></tr>
+          <tr><td>Header, footer, meta tags, wrappers</td><td><code>src/layouts/BaseLayout.astro</code></td></tr>
+          <tr><td>Reusable UI pieces (cards, buttons)</td><td><code>src/components/*.astro</code></td></tr>
+          <tr><td>Site name, default author, SEO defaults</td><td><code>src/config.ts</code> (templates vary)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Tutorial 1 &mdash; change brand colors and fonts</h2>
+      <p>Templates expose design tokens as CSS custom properties. Open <code>src/styles/global.css</code>:</p>
+<pre><code>:root {
+  --color-bg: #ffffff;
+  --color-text: #111827;
+  --color-accent: #2563eb;   /* &larr; change me */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Source Serif Pro", Georgia, serif;
+}
+
+[data-theme="dark"] {
+  --color-bg: #0b0d10;
+  --color-text: #e6edf3;
+  --color-accent: #79c0ff;
+}</code></pre>
+
+      <p>Change <code>--color-accent</code>, save, and the whole site reflows in milliseconds. The accent variable is referenced from buttons, links, and focus states.</p>
+
+      <h3>Swap the font</h3>
+      <p>Three steps:</p>
+      <ol>
+        <li>Pick a font on <a href="https://fonts.google.com" target="_blank" rel="noopener">Google Fonts</a> or self-host from <code>public/fonts/</code>.</li>
+        <li>Add the <code>&lt;link&gt;</code> or <code>@font-face</code> in <code>BaseLayout.astro</code>.</li>
+        <li>Update <code>--font-sans</code> in <code>global.css</code>.</li>
+      </ol>
+
+      <h2>Tutorial 2 &mdash; edit the base layout</h2>
+      <p><code>BaseLayout.astro</code> is the wrapper every page uses. It owns the <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;Header&gt;</code>, <code>&lt;main&gt;</code>, and <code>&lt;Footer&gt;</code>. Here's a typical shape:</p>
+<pre><code>---
+// src/layouts/BaseLayout.astro
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props { title: string; description?: string; }
+const { title, description } = Astro.props;
+---
+&lt;html lang="en"&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8" /&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1" /&gt;
+    &lt;title&gt;{title}&lt;/title&gt;
+    {description &amp;&amp; &lt;meta name="description" content={description} /&gt;}
+    &lt;link rel="icon" href="/favicon.svg" /&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;Header /&gt;
+    &lt;main&gt;&lt;slot /&gt;&lt;/main&gt;
+    &lt;Footer /&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+      <p>Common edits:</p>
+      <ul>
+        <li><strong>Add OpenGraph tags</strong> &mdash; drop <code>&lt;meta property="og:title" ...&gt;</code> in the <code>&lt;head&gt;</code>.</li>
+        <li><strong>Add analytics</strong> &mdash; insert a <code>&lt;script&gt;</code> tag at the end of <code>&lt;body&gt;</code>. For Cloudflare Web Analytics, it's a single line.</li>
+        <li><strong>Make <code>description</code> required</strong> &mdash; remove the <code>?</code> in the Props interface and emdash's TypeScript will flag any page that forgot to pass one.</li>
+      </ul>
+
+      <h2>Tutorial 3 &mdash; add or modify a component</h2>
+      <p>Components live in <code>src/components/</code>. Here's a typed <code>PostCard.astro</code> you might drop in:</p>
+<pre><code>---
+// src/components/PostCard.astro
+interface Props {
+  slug: string;
+  title: string;
+  excerpt?: string;
+  publishedAt?: string;
+}
+const { slug, title, excerpt, publishedAt } = Astro.props;
+---
+&lt;a class="post-card" href={`/posts/${slug}`}&gt;
+  &lt;h3&gt;{title}&lt;/h3&gt;
+  {excerpt &amp;&amp; &lt;p&gt;{excerpt}&lt;/p&gt;}
+  {publishedAt &amp;&amp; (
+    &lt;time datetime={publishedAt}&gt;
+      {new Date(publishedAt).toLocaleDateString()}
+    &lt;/time&gt;
+  )}
+&lt;/a&gt;
+
+&lt;style&gt;
+  .post-card {
+    display: block;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .post-card:hover { border-color: var(--color-accent); }
+&lt;/style&gt;</code></pre>
+      <p>Use it anywhere:</p>
+<pre><code>---
+import PostCard from '../components/PostCard.astro';
+import { getEmDashCollection } from 'emdash';
+
+const { entries: posts } = await getEmDashCollection('post');
+---
+{posts.map(p =&gt; &lt;PostCard {...p.data} slug={p.slug} /&gt;)}</code></pre>
+
+      <h2>Tutorial 4 &mdash; add an interactive React island</h2>
+      <p>Every template installs <code>@astrojs/react</code> already. Drop a React component in and hydrate it with <code>client:*</code>:</p>
+<pre><code>// src/components/Counter.tsx
+import { useState } from 'react';
+
+export default function Counter() {
+  const [n, setN] = useState(0);
+  return &lt;button onClick={() =&gt; setN(n + 1)}&gt;Clicked {n}&lt;/button&gt;;
+}</code></pre>
+<pre><code>// In any .astro page
+---
+import Counter from '../components/Counter.tsx';
+---
+&lt;Counter client:load /&gt;</code></pre>
+      <p>Everything else on the page remains zero-JS; only the Counter ships React.</p>
+
+      <h2>Tutorial 5 &mdash; update seed content</h2>
+      <p><code>seed/seed.json</code> is the starter content loaded by <code>emdash seed</code>. Edit it to change what a fresh clone starts with:</p>
+<pre><code>{
+  "posts": [
+    {
+      "slug": "welcome",
+      "title": "Welcome to our blog",
+      "publishedAt": "2026-04-20T10:00:00Z",
+      "status": "published",
+      "body": [ /* Portable Text blocks */ ]
+    }
+  ],
+  "categories": [ { "slug": "general", "name": "General" } ]
+}</code></pre>
+      <p>After editing, reseed:</p>
+<pre><code>pnpm emdash seed</code></pre>
+
+      <div class="warn">
+        <strong>Seed is not a sync.</strong> Editing <code>seed.json</code> does not push those changes into an already-populated database. Behavior on re-seed depends on the template: some upsert, some require <code>--reset</code>. Check your template's script.
+      </div>
+
+      <h2>Where <em>not</em> to customize</h2>
+      <p>Don't edit files under <code>node_modules/emdash/</code> or <code>node_modules/@emdash-cms/</code>. Those are the CMS itself. If you need to change admin behavior, <a href="12-plugins.html">write a plugin</a>. If you need to change the admin UI's look, the team is working on theming hooks &mdash; track the GitHub repo for updates.</p>
+
+      <nav class="pager">
+        <a class="prev" href="08-adding-pages.html">
+          <span class="direction">&larr; Prev</span>
+          <span class="title">Adding pages</span>
+        </a>
+        <a class="next" href="10-building-content-type.html">
+          <span class="direction">Next</span>
+          <span class="title">Building for a new content type &rarr;</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+</div>
+<script src="search-index.js?v=533b3cd6d1"></script>
+<script src="docs.js?v=1c28559f3f"></script>
+</body>
+</html>
