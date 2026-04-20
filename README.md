@@ -2,6 +2,15 @@
 
 A static-site tutorial for the [emdash CMS](https://github.com/emdash-cms/emdash), deployable to Cloudflare Workers with static assets. No build step, no framework — just HTML, CSS, and a small vanilla JS enhancement layer.
 
+## Based on
+
+This tutorial was written against these upstream revisions:
+
+- **`emdash-cms/emdash`** — release [`emdash@0.5.0`](https://github.com/emdash-cms/emdash/releases/tag/emdash%400.5.0) (2026-04-14), `main` at commit [`f7f4814`](https://github.com/emdash-cms/emdash/commit/f7f4814182e1ad249a9ea15951a1fb5ca4362411) (2026-04-20)
+- **`emdash-cms/templates`** — `main` at commit [`d2f0341`](https://github.com/emdash-cms/templates/commit/d2f03414bc7022efcfbe378a829f2a52a59fdde9) (2026-04-13)
+
+**Updating the tutorial?** Follow the workflow in [`HOWTOUPDATE.md`](HOWTOUPDATE.md). It's written so an LLM can execute it end-to-end: diff upstream → identify affected chapters → patch → rebuild index → redeploy.
+
 ## What's in this repo
 
 ```
